@@ -24,27 +24,27 @@ jobs:
       - name: Fetch and Analyze Website Data
         id: scrape
         run: |
-          # Encode the target URL so the proxy API can read it cleanly
+          # Web-encoded destination link targeting exclusively the Mavros Pokemon grid hub
           TARGET_URL="https://mavroslarnaca.com/?s=pokemon&post_type=product"
           
-          # Construct the proper ScrapingAnt endpoint query URL
+          # Built using the official ScrapingAnt endpoint format
           API_URL="scrapingant.com${TARGET_URL}&x-api-key=${{ secrets.SCRAPER_API_KEY }}"
           
-          # Fetch the page source using the proxy network
+          # Fetch the page source layout data via the residential proxy system
           curl -sL "$API_URL" | grep -o 'product-type-simple' | wc -l > current_state.txt
           
           CURRENT_COUNT=$(cat current_state.txt)
-          echo "Live product count found: $CURRENT_COUNT"
+          echo "Live Pokemon product count found: $CURRENT_COUNT"
           
           if [ ! -f last_state.txt ]; then
             echo "0" > last_state.txt
           fi
           
           LAST_COUNT=$(cat last_state.txt)
-          echo "Previous tracked product count: $LAST_COUNT"
+          echo "Previous tracked count: $LAST_COUNT"
           
           if [ "$CURRENT_COUNT" -eq 0 ]; then
-            echo "Warning: Proxy setup returned 0. Verify your ScrapingAnt API token integration."
+            echo "Warning: Proxy setup returned 0. Verify your ScrapingAnt API token entry."
             echo "CHANGED=false" >> $GITHUB_ENV
           elif [ "$CURRENT_COUNT" -eq "$LAST_COUNT" ]; then
             echo "CHANGED=false" >> $GITHUB_ENV
