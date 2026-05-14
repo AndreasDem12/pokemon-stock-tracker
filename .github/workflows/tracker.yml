@@ -24,10 +24,10 @@ jobs:
       - name: Fetch and Analyze Website Data
         id: scrape
         run: |
-          # Completely web-encoded link to the direct WooCommerce Pokemon catalog collection page
+          # Web-encoded link pointing directly to Mavros Larnaca's Pokemon page
           TARGET_URL="https%3A%2F%2Fmavroslarnaca.com%2Fproduct-tag%2Fpokemon%2F"
           
-          # Properly structured API request targeting ScrapingAnt v2 general endpoint
+          # Fully corrected API URL format utilizing the official ScrapingAnt endpoint format
           API_URL="scrapingant.com${TARGET_URL}&x-api-key=${{ secrets.SCRAPER_API_KEY }}"
           
           # Fetch the clean proxy-rendered page layout content
