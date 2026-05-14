@@ -1,0 +1,64 @@
+name: Check Pokemon Stock
+on:
+  schedule:
+    # Runs every 15 minutes between 06:00 UTC and 18:00 UTC
+    - cron: '*/15 6-18 * * *'
+  workflow_dispatch: # Allows manual testing anytime
+
+jobs:
+  check-stock:
+    runs-on: ubuntu-latest
+    steps: 
+      - name: Checkout repository code
+        uses: actions/checkout@v4
+
+      - name: Restore Previous Scraping State
+        id: cache-state
+        uses: actions/cache@v4
+        with:
+          path: last_state.txt
+          key: pokemon-stock-state-${{ github.run_id }}
+          restore-keys: |
+            pokemon-stock-state-
+
+      - name: Fetch and Analyze Website Data
+        id: scrape
+        run: |
+          # Download the localized Mavros Larnaca Pokemon product grid page
+          # Grepping out specific product articles to find stock count changes
+          curl -sL "https://mavroslarnaca.com/product-tag/pokemon/" | grep -o 'class="product-type-simple' | wc -l > current_state.txt
+          
+          CURRENT_COUNT=$(cat current_state.txt)
+          echo "Live product count found: $CURRENT_COUNT"
+          
+          # Initialize baseline state if cache is empty
+          if [ ! -f last_state.txt ]; then
+            echo "0" > last_state.txt
+          fi
+          
+          LAST_COUNT=$(cat last_state.txt)
+          echo "Previous tracked product count: $LAST_COUNT"
+          
+          # Compare the files. If they match, flag that no alert is needed
+          if [ "$CURRENT_COUNT" -eq "$LAST_COUNT" ]; then
+            echo "CHANGED=false" >> $GITHUB_ENV
+          else
+            echo "CHANGED=true" >> $GITHUB_ENV
+            # Overwrite old value with new state for the next run
+            cp current_state.txt last_state.txt
+          fi
+
+      - name: Save Updated State to Cache
+        if: env.CHANGED == 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: last_state.txt
+          key: pokemon-stock-state-${{ github.run_id }}
+
+      - name: Send Discord Alert
+        if: env.CHANGED == 'true'
+        run: |
+          curl -H "Content-Type: application/json" \
+               -X POST \
+               -d '{"content": "<@123456789012345678> 🚨 **MAVROS LARNACA RESTOCK DETECTED!** The catalog layout has changed. Check immediately: https://mavroslarnaca.com/product-tag/pokemon/"}' \
+               "${{ secrets.DISCORD_WEBHOOK_URL }}"
