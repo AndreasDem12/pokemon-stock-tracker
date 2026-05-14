@@ -65,5 +65,5 @@ jobs:
         run: |
           curl -H "Content-Type: application/json" \
                -X POST \
-               -d '{"content": "<@423525742161297408> 🚨 **MAVROS LARNACA RESTOCK DETECTED!** The catalog layout has changed. Check immediately: https://mavroslarnaca.com/product-tag/pokemon/"}' \
+               -d '{"content": "<@423525742161297408> 🚨 **MAVROS LARNACA RESTOCK DETECTED!** The catalog layout has changed. Check immediately: mavroslarnaca.com"}' \
                "${{ secrets.DISCORD_WEBHOOK_URL }}"
