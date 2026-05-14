@@ -24,14 +24,19 @@ jobs:
       - name: Fetch and Analyze Website Data
         id: scrape
         run: |
-          # Download the localized Mavros Larnaca Pokemon product grid page
-          # Grepping out specific product articles to find stock count changes
-          curl -sL "https://mavroslarnaca.com/product-tag/pokemon/" | grep -o 'class="product-type-simple' | wc -l > current_state.txt
+          # Use a real browser session configuration with headers to bypass security blocks
+          curl -sL \
+            -H "User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36" \
+            -H "Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8" \
+            -H "Accept-Language: en-US,en;q=0.9" \
+            -H "Cache-Control: no-cache" \
+            -H "Pragma: no-cache" \
+            "mavroslarnaca.com" | grep -o 'product-type-simple' | wc -l > current_state.txt
           
           CURRENT_COUNT=$(cat current_state.txt)
           echo "Live product count found: $CURRENT_COUNT"
           
-          # Initialize baseline state if cache is empty
+          # Force a baseline state check
           if [ ! -f last_state.txt ]; then
             echo "0" > last_state.txt
           fi
@@ -39,12 +44,14 @@ jobs:
           LAST_COUNT=$(cat last_state.txt)
           echo "Previous tracked product count: $LAST_COUNT"
           
-          # Compare the files. If they match, flag that no alert is needed
-          if [ "$CURRENT_COUNT" -eq "$LAST_COUNT" ]; then
+          # Prevent false 0-to-0 matches if a request is temporarily dropped
+          if [ "$CURRENT_COUNT" -eq 0 ]; then
+            echo "Warning: Received an empty page. Skipping state updates to avoid data corruption."
+            echo "CHANGED=false" >> $GITHUB_ENV
+          elif [ "$CURRENT_COUNT" -eq "$LAST_COUNT" ]; then
             echo "CHANGED=false" >> $GITHUB_ENV
           else
             echo "CHANGED=true" >> $GITHUB_ENV
-            # Overwrite old value with new state for the next run
             cp current_state.txt last_state.txt
           fi
 
