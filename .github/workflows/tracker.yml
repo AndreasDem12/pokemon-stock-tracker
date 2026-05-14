@@ -24,13 +24,13 @@ jobs:
       - name: Fetch and Analyze Website Data
         id: scrape
         run: |
-          # Web-encoded destination link targeting exclusively the Mavros Pokemon grid hub
-          TARGET_URL="https://mavroslarnaca.com/?s=pokemon&post_type=product"
+          # Completely web-encoded link to the direct WooCommerce Pokemon catalog collection page
+          TARGET_URL="https%3A%2F%2Fmavroslarnaca.com%2Fproduct-tag%2Fpokemon%2F"
           
-          # Built using the official ScrapingAnt endpoint format
+          # Properly structured API request targeting ScrapingAnt v2 general endpoint
           API_URL="scrapingant.com${TARGET_URL}&x-api-key=${{ secrets.SCRAPER_API_KEY }}"
           
-          # Fetch the page source layout data via the residential proxy system
+          # Fetch the clean proxy-rendered page layout content
           curl -sL "$API_URL" | grep -o 'product-type-simple' | wc -l > current_state.txt
           
           CURRENT_COUNT=$(cat current_state.txt)
@@ -52,7 +52,6 @@ jobs:
             echo "CHANGED=true" >> $GITHUB_ENV
             cp current_state.txt last_state.txt
           fi
-
 
       - name: Save Updated State to Cache
         if: env.CHANGED == 'true'
